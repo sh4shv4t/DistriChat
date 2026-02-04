@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+package chat;
+
+option go_package = "github.com/distribchat/proto";
+
+// ChatService handles chat message routing and processing
+service ChatService {
+    // PostMessage sends a message to a specific chat session
+    rpc PostMessage(ChatRequest) returns (ChatResponse);
+    
+    // GetCacheStats returns the current cache statistics for the server
+    rpc GetCacheStats(StatsRequest) returns (StatsResponse);
+    
+    // HealthCheck verifies the server is alive and accepting requests
+    rpc HealthCheck(HealthRequest) returns (HealthResponse);
+}
+
+// ChatRequest contains a message for a specific chat session
+message ChatRequest {
+    string chat_id = 1;      // Unique identifier for the chat session
+    string message = 2;       // The message content
+    string sender_id = 3;     // ID of the message sender
+    int64 timestamp = 4;      // Unix timestamp of the message
+}
+
+// ChatResponse contains the server's response to a chat message
+message ChatResponse {
+    bool success = 1;                // Whether the message was processed successfully
+    string server_id = 2;            // ID of the server that handled the request
+    string error_message = 3;        // Error details if success is false
+    CacheLocation cache_location = 4; // Where the chat session is cached
+    int32 message_count = 5;         // Total messages in this chat session
+}
+
+// CacheLocation indicates where the chat session data is stored
+enum CacheLocation {
+    CACHE_UNKNOWN = 0;
+    CACHE_L1 = 1;      // Hot cache (simulates GPU VRAM)
+    CACHE_L2 = 2;      // Warm cache (simulates system RAM)
+    CACHE_MISS = 3;    // Not in cache (new session)
+}
+
+// StatsRequest requests cache statistics from a server
+message StatsRequest {
+    string server_id = 1;
+}
+
+// StatsResponse contains cache statistics
+message StatsResponse {
+    string server_id = 1;
+    int32 l1_size = 2;           // Current L1 cache size
+    int32 l1_capacity = 3;       // Maximum L1 cache capacity
+    int32 l2_size = 4;           // Current L2 cache size
+    int32 l2_capacity = 5;       // Maximum L2 cache capacity
+    int64 total_requests = 6;    // Total requests processed
+    int64 cache_hits = 7;        // Number of cache hits
+    int64 cache_misses = 8;      // Number of cache misses
+    repeated string l1_chats = 9; // Chat IDs in L1 cache
+    repeated string l2_chats = 10; // Chat IDs in L2 cache
+}
+
+// HealthRequest for health checking
+message HealthRequest {}
+
+// HealthResponse indicates server health status
+message HealthResponse {
+    bool healthy = 1;
+    string server_id = 2;
+    int64 uptime_seconds = 3;
+}
